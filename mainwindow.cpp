@@ -3,6 +3,7 @@
 
 #include <QtWidgets>
 #include <QSystemTrayIcon>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -14,6 +15,11 @@ MainWindow::MainWindow(QWidget *parent) :
     createTrayIcon();
 
     loadConfig();
+}
+
+MainWindow::~MainWindow()
+{
+    delete m_ui;
 }
 
 void MainWindow::reloadConfig()
@@ -38,18 +44,22 @@ bool MainWindow::loadConfig()
 {
     QDir path(QCoreApplication::applicationDirPath());
 
-    QFile loadFile(path.absoluteFilePath(QStringLiteral("config.json")));
+    QString configFile = path.absoluteFilePath(QStringLiteral("config.json"));
 
-    if (!loadFile.open(QIODevice::ReadOnly)) {
+    qDebug() << "Loading config file:" << configFile;
+
+    QFile loadFile(configFile);
+
+    if (!loadFile.open(QIODevice::ReadOnly)) {        
         showMessage("Couldn't open config file.");
         return false;
     }
 
-    QByteArray saveData = loadFile.readAll();
-
-    QJsonDocument loadDoc(QJsonDocument::fromJson(saveData));
+    QJsonDocument loadDoc(QJsonDocument::fromJson(loadFile.readAll()));
 
     m_config = loadDoc.object();
+
+    m_client.loadConfig(m_config);
 
     return true;
 }
@@ -58,7 +68,7 @@ void MainWindow::createTrayIcon()
 {
     m_trayIconMenu = new QMenu(this);
 
-    m_trayIconMenu->addAction(m_reloadConfigAction);
+    //m_trayIconMenu->addAction(m_reloadConfigAction);
     m_trayIconMenu->addAction(m_aboutAction);
     m_trayIconMenu->addSeparator();
     m_trayIconMenu->addAction(m_quitAction);
@@ -82,7 +92,3 @@ void MainWindow::createActions()
     connect(m_aboutAction, SIGNAL(triggered()), this, SLOT(about()));
 }
 
-MainWindow::~MainWindow()
-{
-    delete m_ui;
-}
