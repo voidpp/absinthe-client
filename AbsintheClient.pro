@@ -4,14 +4,14 @@
 #
 #-------------------------------------------------
 
-QT += core gui websockets
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT += core gui websockets widgets
 
 TARGET = AbsintheClient
 TEMPLATE = app
 
 CONFIG += c++11
+
+include(qxtglobalshortcut5/qxt.pri)
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -19,9 +19,14 @@ SOURCES += main.cpp\
     session.cpp \
     host.cpp \
     editorbase.cpp \
-    listenerbase.cpp \
     client.cpp \
-    nppeditor.cpp
+    nppeditor.cpp \
+    filelogger.cpp \
+    vscodeeditor.cpp \
+    windowhelper.cpp \
+    searchdialog.cpp \
+    searchmessage.cpp \
+    config.cpp
 
 HEADERS  += mainwindow.h \
     message.h \
@@ -30,9 +35,19 @@ HEADERS  += mainwindow.h \
     editorbase.h \
     listenerbase.h \
     client.h \
-    nppeditor.h
+    nppeditor.h \
+    notifier.h \
+    filelogger.h \
+    vscodeeditor.h \
+    windowhelper.h \
+    searchdialog.h \
+    searchmessage.h \
+    config.h \
+    directfileopenerbase.h
 
 FORMS    += mainwindow.ui
 
 RESOURCES += \
     resources.qrc
+
+LIBS += -luser32

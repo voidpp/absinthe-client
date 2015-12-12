@@ -13,9 +13,13 @@ bool EditorBase::openFile(const QString &filename, unsigned int line)
 {
     qDebug() << "Open file:" << filename;
 
+    QStringList args = getCommandArguments(filename, line);
+
+    qDebug() << "Editor:" << m_binPath << ", args:" << args;
+
     QProcess process;
     process.setProgram(m_binPath);
-    process.setArguments(getCommandArguments(filename, line));
+    process.setArguments(args);
     process.start();
 
     process.waitForFinished();

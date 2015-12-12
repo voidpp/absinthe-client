@@ -1,11 +1,19 @@
 #include "mainwindow.h"
-#include <QApplication>
 
+#include <QApplication>
 #include <QDebug>
+
+#include "filelogger.h"
+
+#include "windows.h"
 
 int main(int argc, char *argv[])
 {
-    qSetMessagePattern("%{time yyyy-MM-dd HH:mm:ss.zzz} %{type} %{threadid} %{file}(%{line}): %{message}");
+    //FileLogger logger("absinthe.log");
+    //qInstallMessageHandler(FileLogger::message);
+
+    AllowSetForegroundWindow(ASFW_ANY);
+
     QApplication app(argc, argv);
     app.setOrganizationName("QtProject");
     app.setApplicationName("Application Example");

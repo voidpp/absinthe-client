@@ -16,14 +16,18 @@ class Host: public QObject
     Q_OBJECT
 
     public:
-        explicit Host(const QString& name, const QString& host, unsigned short port, QObject *parent = Q_NULLPTR);
+        explicit Host(const QString& name, const QString& host, unsigned short port, unsigned int reconnectTime, QObject *parent = Q_NULLPTR);
 
-        void addListener(const QString& name, ListenerBase* listener);
+        void addListener(const QString& name, const std::shared_ptr<ListenerBase>& listener);
         bool isConnected();
 
         void send(const Message& message);
 
         void connectToRemote();
+
+        const QString& getName() const {
+            return m_name;
+        }
 
     private Q_SLOTS:
 
@@ -38,10 +42,12 @@ class Host: public QObject
         QWebSocket m_webSocket;
         QString m_name;
         bool m_connected;
-        QMap<QString, QList<ListenerBase*>> m_listeners;
+        bool m_connectStarted;
+        QMap<QString, QList<std::shared_ptr<ListenerBase>>> m_listeners;
         QList<Message> m_messageQueue;
         QTimer* m_timer;
         QString m_id;
+        unsigned int m_reconnectTime;
 };
 
 #endif // HOST_H

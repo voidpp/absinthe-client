@@ -10,7 +10,7 @@ class NppEditor : public EditorBase
 
         virtual QStringList getCommandArguments(const QString &filename, unsigned int line);
         virtual void setFocus();
-        virtual bool openContent(const QString& content);
+        virtual bool openContent(const QString&);
 };
 
 #endif // NPPEDITOR_H

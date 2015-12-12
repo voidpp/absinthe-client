@@ -2,11 +2,13 @@
 
 #include <QDebug>
 
-Host::Host(const QString &name, const QString &host, unsigned short port, QObject *parent)
+Host::Host(const QString &name, const QString &host, unsigned short port, unsigned int reconnectTime, QObject *parent)
     :QObject(parent)
     ,m_name(name)
     ,m_connected(false)
+    ,m_connectStarted(false)
     ,m_timer(new QTimer(this))
+    ,m_reconnectTime(reconnectTime)
 {
     connect(&m_webSocket, &QWebSocket::connected, this, &Host::onConnected);
     connect(&m_webSocket, &QWebSocket::disconnected, this, &Host::onClose);
@@ -18,10 +20,15 @@ Host::Host(const QString &name, const QString &host, unsigned short port, QObjec
     m_url = QString("ws://%1:%2").arg(host, QString::number(port));
 
     m_id = m_url.toDisplayString() + " (" + m_name + ")";
+
+    qDebug() << "Host created:" << m_id << "reconnect interval:" << reconnectTime << "ms";
 }
 
 void Host::connectToRemote()
 {
+    if (m_connectStarted || isConnected())
+        return;
+    m_connectStarted = true;
     qDebug() << "Try to connect to" << m_id;
     m_webSocket.open(m_url);
 }
@@ -46,13 +53,14 @@ void Host::send(const Message &message)
 
 void Host::onConnected()
 {
-    qDebug() << "Connected to" << m_id;
-
+    m_connectStarted = false;
     m_connected = true;
+
+    qDebug() << "Connected to" << m_id;
 
     for(auto name: m_listeners.keys()) {
         for(auto listener: m_listeners.value(name))
-            listener->onConnect();
+            listener->onConnect(*this);
     }
 
     for(auto&& message: m_messageQueue) {
@@ -78,7 +86,7 @@ void Host::onTextMessageReceived(const QString &message)
     qDebug() << "Received message:" << msg;
 
     for(auto listener: m_listeners.value(msg.getName()))
-        listener->onMessage(msg);
+        listener->onMessage(msg, *this);
 }
 
 void Host::onClose()
@@ -88,7 +96,12 @@ void Host::onClose()
         m_connected = false;
     }
 
-    m_timer->start(1000);
+    for(auto name: m_listeners.keys()) {
+        for(auto listener: m_listeners.value(name))
+            listener->onClose(*this);
+    }
+
+    m_timer->start(m_reconnectTime);
 }
 
 void Host::onReconnectTimer()
@@ -96,7 +109,7 @@ void Host::onReconnectTimer()
     connectToRemote();
 }
 
-void Host::addListener(const QString &name, ListenerBase *listener)
+void Host::addListener(const QString &name, const std::shared_ptr<ListenerBase> &listener)
 {
     m_listeners[name].append(listener);
 }

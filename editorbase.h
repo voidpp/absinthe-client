@@ -1,6 +1,7 @@
 #ifndef EDITORBASE_H
 #define EDITORBASE_H
 
+#include <memory>
 #include <QString>
 #include <QStringList>
 
@@ -24,15 +25,15 @@ class EditorBase
 class EditorFactoryBase
 {
     public:
-        virtual EditorBase* create(const QString& name, const QString& binPath) = 0;
+        virtual std::shared_ptr<EditorBase> create(const QString& name, const QString& binPath) = 0;
 };
 
 template<class T>
 class EditorFactory: public EditorFactoryBase
 {
     public:
-        T* create(const QString& name, const QString& binPath) {
-            return new T(name, binPath);
+        std::shared_ptr<T> create(const QString& name, const QString& binPath) {
+            return std::make_shared<T>(name, binPath);
         }
 };
 

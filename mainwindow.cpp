@@ -5,11 +5,20 @@
 #include <QSystemTrayIcon>
 #include <QDebug>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    m_ui(new Ui::MainWindow)
+#include "client.h"
+#include "searchdialog.h"
+
+#include "qxtglobalshortcut.h"
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , m_ui(new Ui::MainWindow)
+    , m_client(new Client(this, this))
 {
     m_ui->setupUi(this);
+
+    QDir path(QCoreApplication::applicationDirPath());
+    m_config.setFilename(path.absoluteFilePath(QStringLiteral("config.json")));
 
     createActions();
     createTrayIcon();
@@ -35,31 +44,46 @@ void MainWindow::about()
     msgBox.exec();
 }
 
-void MainWindow::showMessage(const QString& message, const QString& title)
+void MainWindow::onHotkey()
+{
+    qDebug() << "Open search dialog due global hotkey event received.";
+    openSearchDialog();
+}
+
+void MainWindow::onOpenSearch()
+{
+    openSearchDialog();
+}
+
+void MainWindow::sendMessage(const QString& message, const QString& title)
 {
     m_trayIcon->showMessage(title, message);
 }
 
+void MainWindow::openSearchDialog()
+{
+    SearchDialog dialog(m_config, m_client);
+    dialog.exec();
+}
+
 bool MainWindow::loadConfig()
 {
-    QDir path(QCoreApplication::applicationDirPath());
-
-    QString configFile = path.absoluteFilePath(QStringLiteral("config.json"));
-
-    qDebug() << "Loading config file:" << configFile;
-
-    QFile loadFile(configFile);
-
-    if (!loadFile.open(QIODevice::ReadOnly)) {        
-        showMessage("Couldn't open config file.");
+    if(!m_config.load()) {
+        sendMessage("Cannot load config file");
         return false;
     }
 
-    QJsonDocument loadDoc(QJsonDocument::fromJson(loadFile.readAll()));
+    m_client->loadConfig(m_config.getData());
 
-    m_config = loadDoc.object();
+    bool searchEnabled = !m_config.getSessionsWithSearch().empty();
 
-    m_client.loadConfig(m_config);
+    if(searchEnabled) {
+        QxtGlobalShortcut *shortcut = new QxtGlobalShortcut(this);
+        shortcut->setShortcut(QKeySequence(m_config.getData()["search"].toObject()["hotkey"].toString()));
+        connect(shortcut, &QxtGlobalShortcut::activated, this, &MainWindow::onHotkey);
+    }
+
+    m_showSearchDialogAction->setEnabled(searchEnabled);
 
     return true;
 }
@@ -68,8 +92,9 @@ void MainWindow::createTrayIcon()
 {
     m_trayIconMenu = new QMenu(this);
 
-    //m_trayIconMenu->addAction(m_reloadConfigAction);
+    m_trayIconMenu->addAction(m_reloadConfigAction);
     m_trayIconMenu->addAction(m_aboutAction);
+    m_trayIconMenu->addAction(m_showSearchDialogAction);
     m_trayIconMenu->addSeparator();
     m_trayIconMenu->addAction(m_quitAction);
 
@@ -90,5 +115,8 @@ void MainWindow::createActions()
 
     m_aboutAction = new QAction(tr("&About"), this);
     connect(m_aboutAction, SIGNAL(triggered()), this, SLOT(about()));
+
+    m_showSearchDialogAction = new QAction(tr("&File search"), this);
+    connect(m_showSearchDialogAction, SIGNAL(triggered()), this, SLOT(onOpenSearch()));
 }
 

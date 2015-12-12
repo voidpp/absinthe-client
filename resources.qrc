@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>logo16.png</file>
+        <file>search-dialog-icon.png</file>
     </qresource>
 </RCC>

@@ -5,30 +5,40 @@
 
 #include <QDir>
 
-Session::Session(const QString& name, Host *host, EditorBase *editor, const QString& path, const QString& remotePath)
+Session::Session(const QString& name, const std::shared_ptr<EditorBase>& editor, const QString& path, const QString& remotePath, QWidget *widget)
    :m_name(name)
-   ,m_host(host)
    ,m_editor(editor)
    ,m_path(path)
    ,m_remotePath(remotePath)
+   ,m_widget(widget)
 {
-    m_host->addListener(m_name, this);
 }
 
-void Session::onConnect()
+void Session::onConnect(Host& host)
 {
     Message msg(m_name, "session_start");
     msg["remote_path"] = m_remotePath;
 
-    m_host->send(msg);
+    host.send(msg);
 }
 
-void Session::onMessage(const Message &message)
+void Session::onMessage(const Message &message, Host&)
 {
+    m_widget->activateWindow();
     if (message.getCommand() == "open_file") {
-        QString path = m_path + "/" + message["filename"].toStringList().join("/");
-        m_editor->openFile(QDir::toNativeSeparators(path), message["line"].toInt());
+        openFile(message["filename"].toStringList(), message["line"].toInt());
     } else if (message.getCommand() == "set_focus") {
-        m_editor->setFocus();
+        setFocus();
     }
+}
+
+void Session::openFile(const QStringList &pathlist, unsigned int line)
+{
+    QString path = m_path + "/" + pathlist.join("/");
+    m_editor->openFile(QDir::toNativeSeparators(path), line);
+}
+
+void Session::setFocus()
+{
+    m_editor->setFocus();
 }

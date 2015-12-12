@@ -1,19 +1,19 @@
 {
     "editors": {
-        "npp": ["c:\\Program Files (x86)\\Notepad++\\notepad++.exe", "%(filename)s", "-n%(line)d"]
+        "npp": "c:\\Program Files (x86)\\Notepad++\\notepad++.exe"
     },
     "hosts": {
-        "somehost": {
-            "host": "somedomain.hu",
-            "port": 52180
-        }
+		"camel": {
+			"host": "camel.ca",
+			"port": 52180
+		}
     },
     "sessions": [{
-        "enabled": true,
-        "host": "somehost",
-        "name": "somename",
-        "remote-path": "some-name",
-        "path": "z:\\devel\\remote\\somethong",
-        "editor": "npp"
+		"enabled": true,
+		"host": "camel",
+		"name": "camel-douglas",
+		"remote-path": "douglas",
+		"path": "k:\\",
+		"editor": "npp"
     }]
 }
